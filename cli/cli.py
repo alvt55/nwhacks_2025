@@ -65,7 +65,7 @@ def main():
     
     directory = "./"  # Current directory
     
-
+    # list of files tracked, not in gitignore
     list_of_bytes= subprocess.check_output("git ls-files", shell=True).splitlines()
     list_of_files = [byte.decode('utf-8') for byte in list_of_bytes]
     print(list_of_files)
