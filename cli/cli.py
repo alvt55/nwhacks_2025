@@ -6,6 +6,8 @@ import re
 import requests
 import json 
 
+import subprocess
+
 def encrypt(value: str):
    
     # res = requests.get('google.com')
@@ -31,21 +33,29 @@ def decrypt(key: bytes, encoded_key: bytes):
 def process_file(file_path):
 
 
-    key_pattern = re.compile(r"api", re.IGNORECASE)
+    patterns = [
+    r"^[a-zA-Z0-9]{32}$",  # Standard 32-character key
+    r"^[a-zA-Z0-9]{8}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{12}$",  # Key with dashes
+    r"^[A-Za-z0-9_-]{22}\.[A-Za-z0-9_-]{43}$",  # Base64-like JWT key
+     r"sk_(test|live)_[a-zA-Z0-9]{32}"  # Stripe API key (test or live)
+    ]
+    
+    # key_pattern = re.compile(r"api", re.IGNORECASE)
     found_keys = []
 
     try:
         with open(file_path, "r") as file:
             # Read the file content
             content = file.read()
+        
+        modified_content = ""
 
         # Use re.sub to replace all occurrences of the pattern in the content
-        modified_content = re.sub(
-            key_pattern, lambda m: encrypt(m.group(0)), content
-        )
-
-        # Append found keys (all matches) to the list
-        found_keys.extend(key_pattern.findall(content))
+        for pattern in patterns:
+            pattern = re.compile(pattern)
+            modified_content = re.sub(
+                pattern, lambda m: encrypt(m.group(0)), content)
+            found_keys.extend(pattern.findall(content))
 
         # Write the modified content back to the file
         with open(file_path, "w") as file:
@@ -57,7 +67,8 @@ def process_file(file_path):
 
     return found_keys
 
-import subprocess
+
+
 
 def main():
     
@@ -81,7 +92,7 @@ def main():
                 if (os.path.realpath(os.path.join(root, file)) == __file__) or (file not in list_of_files):
                     continue
                 
-               
+                print("Checking", file)
                 file_path = os.path.join(root, file)
                 print(file_path)
                 print(process_file(file_path))
