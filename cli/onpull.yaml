@@ -1,0 +1,32 @@
+name: Conditional Decrypt on Pull
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  run-decrypt:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Authenticate user
+        id: auth
+        run: |
+          response=$(curl -s -X POST firebase/authenticate \
+            -H "Content-Type: application/json" \
+            -d '{"github_username": "${{ github.actor }}", "token": "${{ secrets.AUTH_TOKEN }}"}')
+
+          echo "Response: $response"
+
+          if [[ $(echo "$response" | jq -r '.authenticated') != "true" ]]; then
+            echo "Authentication failed. Exiting."
+            exit 1
+          fi
+
+      - name: Decrypt files
+        run: |
+          python -c "from cli import decrpt; decrypt()"
