@@ -3,6 +3,7 @@ import { Application, Request, Response } from "express";
 import { users } from "../db/schemas/users";
 import { projects } from "../db/schemas/projects";
 import { eq } from "drizzle-orm";
+import { projectCollaborators } from "../db/schemas/project-collaborators";
 
 class UsersController {
     constructor(private readonly db: NodePgDatabase) {}
@@ -57,15 +58,25 @@ class UsersController {
             return;
         }
 
-        const userProjects = await this.db
-            .select({
-                uuid: projects.uuid,
-                name: projects.name,
-                ownerId: projects.ownerId,
-            })
-            .from(users)
-            .leftJoin(projects, eq(users.id, projects.ownerId))
-            .where(eq(users.id, +id));
+        let userProjects;
+        try {
+            userProjects = await this.db
+                .select({
+                    uuid: projects.uuid,
+                    name: projects.name,
+                    ownerId: projects.ownerId,
+                })
+                .from(projects)
+                .where(eq(projects.ownerId, +id!));
+
+        } catch (err) {
+            console.error(err);
+            res.status(500).send({
+                success: false,
+                error: "Failed to retrieve projects",
+            });
+            return;
+        }
 
         res.send({
             success: true,

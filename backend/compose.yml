@@ -7,5 +7,9 @@ services:
             POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
         volumes:
             - postgres-data:/var/lib/postgresql:rw
+    backend:
+        build: .
+        ports:
+            - "3000:3000"
 volumes:
     postgres-data:
