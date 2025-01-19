@@ -1,0 +1,10 @@
+name: New Repository Action
+on:
+  repository:
+    types: [created]
+jobs:
+  handle-new-repository:
+  steps:
+    name: Run
+    run: |
+      npm run projects/page.tsx
