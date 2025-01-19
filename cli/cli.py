@@ -1,9 +1,17 @@
-from cryptography.fernet import Fernet
+from fernet import Fernet
+from argparse import ArgumentParser
+import os
+import re
+
+import requests
+import json 
 
 def encrypt(value: str):
-    # api req key from backend 
-    # use key to encrypt 
-
+   
+    # res = requests.get('google.com')
+    # response = json.loads(res.text)
+    # encryptKey = response.data.key 
+    
     key = Fernet.generate_key()
     cipher_suite = Fernet(key)
     encoded_key = cipher_suite.encrypt(value.encode())
@@ -18,24 +26,12 @@ def decrypt(key: bytes, encoded_key: bytes):
     decoded_key = cipher_suite.decrypt(encoded_key)
     return decoded_key.decode()
 
-from argparse import ArgumentParser
-import os
-import re
-
-# parser = ArgumentParser()
-# parser.add_argument('directory', type=str, default=os.getcwd(), help='Directory containing files to process')
-# args = parser.parse_args() # make them usable
-
-
-# def encrypt(m):
-#     return m.group(0) + 'test'
 
 
 def process_file(file_path):
-    # A basic pattern that might match API keys (e.g., alphanumeric, often with underscores or dashes)
-    # api_key_pattern = re.compile(r'[A-Za-z0-9-_]{32,}')
 
-    api_key_pattern = re.compile(r"api", re.IGNORECASE)
+
+    key_pattern = re.compile(r"api", re.IGNORECASE)
     found_keys = []
 
     try:
@@ -45,11 +41,11 @@ def process_file(file_path):
 
         # Use re.sub to replace all occurrences of the pattern in the content
         modified_content = re.sub(
-            api_key_pattern, lambda m: encrypt(m.group(0)), content
+            key_pattern, lambda m: encrypt(m.group(0)), content
         )
 
         # Append found keys (all matches) to the list
-        found_keys.extend(api_key_pattern.findall(content))
+        found_keys.extend(key_pattern.findall(content))
 
         # Write the modified content back to the file
         with open(file_path, "w") as file:
@@ -61,22 +57,33 @@ def process_file(file_path):
 
     return found_keys
 
+import subprocess
 
 def main():
+    
+
+    
     directory = "./"  # Current directory
+    
+
+    list_of_bytes= subprocess.check_output("git ls-files", shell=True).splitlines()
+    list_of_files = [byte.decode('utf-8') for byte in list_of_bytes]
+    print(list_of_files)
 
     #   Check if the directory exists
     if not os.path.isdir(directory):
         print(f"Error: The directory {directory} does not exist.")
     else:
         # Iterate through all files in the specified directory
-        for root, _, files in os.walk(directory):
-            print("files", files)
+        for root, dirs, files in os.walk(directory):
+                
             for file in files:
-                if os.path.realpath(os.path.join(root, file)) == __file__:
+                if (os.path.realpath(os.path.join(root, file)) == __file__) or (file not in list_of_files):
                     continue
                 
+               
                 file_path = os.path.join(root, file)
+                print(file_path)
                 print(process_file(file_path))
 
 
