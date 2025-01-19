@@ -17,5 +17,5 @@ jobs:
         pip install -r requirements.txt
     - name: Run
       run: |
-        python -c "from cli import encrypt; encrypt()"
+        python cli.py
 
