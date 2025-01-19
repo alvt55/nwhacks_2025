@@ -1,6 +1,19 @@
+import Image from 'next/image';
+
 export default function SignupPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        {/* Logo */}
+        <div className="absolute top-0 right-4">
+          <Image
+            src="/images/nwlogo.png"
+            alt="Logo"
+            width={100}
+            height={100}
+            className="object-contain"
+          />
+        </div>
+
         <div className="bg-white p-8 rounded-lg shadow-md w-96">
           <h1 className="text-2xl font-bold mb-6 text-center text-gray-700">Sign Up</h1>
           
