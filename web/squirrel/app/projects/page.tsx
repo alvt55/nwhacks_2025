@@ -6,12 +6,49 @@ interface Project {
   id: number;
   name: string;
   keys: string[];
+  collaborators: string[];
 }
 
 export default function ProjectsPage() {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [newCollaborator, setNewCollaborator] = useState('');
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+
+    const isValidEmail = (email: string) => {
+    return email.includes('@');
+  };
+
+  const addCollaborator = (projectId: number, email: string) => {
+    if (!email.trim()) {  
+      return;
+    }
+    
+    if (!isValidEmail(email)) {
+      return;
+    }
+    
+    // Update projects state
+    setProjects(projects.map(project => {
+      if (project.id === projectId) {
+        return {
+          ...project,
+          collaborators: [...(project.collaborators || []), email]
+        };
+      }
+      return project;
+    }));
+
+    // Update selectedProject state
+    if (selectedProject && selectedProject.id === projectId) {
+      setSelectedProject({
+        ...selectedProject,
+        collaborators: [...(selectedProject.collaborators || []), email]
+      });
+    }
+    
+    setNewCollaborator('');
+  };
 
   useEffect(() => {
     const fetchRepos = async () => {
@@ -31,6 +68,7 @@ export default function ProjectsPage() {
           id: repo.id,
           name: repo.name,
           keys: [], // Initialize with empty keys array
+          collaborators: []
         }));
         setProjects(formattedRepos);
       } catch (error) {
@@ -42,6 +80,27 @@ export default function ProjectsPage() {
 
     fetchRepos();
   }, []);
+
+  const removeCollaborator = (projectId: number, emailToRemove: string) => {
+    // Update projects state
+    setProjects(projects.map(project => {
+      if (project.id === projectId) {
+        return {
+          ...project,
+          collaborators: project.collaborators.filter(email => email !== emailToRemove)
+        };
+      }
+      return project;
+    }));
+
+    // Update selectedProject state
+    if (selectedProject && selectedProject.id === projectId) {
+      setSelectedProject({
+        ...selectedProject,
+        collaborators: selectedProject.collaborators.filter(email => email !== emailToRemove)
+      });
+    }
+  };
 
   if (loading) return <div className="flex h-screen items-center justify-center">Loading...</div>;
 
@@ -119,19 +178,29 @@ export default function ProjectsPage() {
                   <input
                     type="email"
                     placeholder="Add collaborator email"
+                    value={newCollaborator}
+                    onChange={(e) => setNewCollaborator(e.target.value)}
                     className="flex-1 p-2 border rounded"
                   />
-                  <button className="px-4 py-2 text-sm bg-green-500 text-white rounded hover:bg-green-600">
-                    Add
+                  <button 
+                    onClick={() => selectedProject && addCollaborator(selectedProject.id, newCollaborator)}
+                    className="px-4 py-2 text-sm bg-green-500 text-white rounded hover:bg-green-600"
+                  >                    
+                  Add
                   </button>
                 </div>
                 <ul className="space-y-2">
-                  <li className="flex items-center justify-between p-2 bg-gray-50 rounded ">
-                    <span>collaborator@example.com</span>
-                    <button className="px-3 py-1 text-sm text-red-500 hover:text-red-600">
+                {selectedProject?.collaborators?.map((email, index) => (
+                  <li key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                    <span className="text-gray-700">{email}</span>
+                    <button 
+                      onClick={() => selectedProject && removeCollaborator(selectedProject.id, email)}
+                      className="px-3 py-1 text-sm text-red-500 hover:text-red-600"
+                    >
                       Remove
                     </button>
                   </li>
+                ))}
                 </ul>
               </div>
             </div>
